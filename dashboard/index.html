@@ -439,7 +439,246 @@
     }
     .success-bar { height: 8px; border-radius: 4px; overflow: hidden; background: var(--bg3); margin-top: .4rem; }
     .success-fill { height: 100%; background: var(--green); border-radius: 4px; }
+
+    /* ═══════════════════════════════════════════
+       CUSTOM SQL STUDIO
+    ═══════════════════════════════════════════ */
+    .studio-grid {
+      display: grid;
+      grid-template-columns: 310px 1fr;
+      gap: 1.5rem;
+      align-items: start;
+    }
+    @media (max-width: 960px) {
+      .studio-grid { grid-template-columns: 1fr; }
+    }
+    .studio-sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+    .studio-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      backdrop-filter: blur(12px);
+    }
+    .studio-card-title {
+      font-size: .78rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: .85rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .schema-table-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: .85rem;
+      margin-bottom: .75rem;
+    }
+    .schema-table-header {
+      font-size: .85rem;
+      font-weight: 700;
+      color: var(--purple-l);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: .5rem;
+      cursor: pointer;
+    }
+    .schema-table-header:hover {
+      color: #fff;
+    }
+    .schema-cols-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .35rem;
+    }
+    .schema-col-pill {
+      font-family: 'Space Mono', monospace;
+      font-size: .7rem;
+      padding: .2rem .5rem;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      border-radius: 4px;
+      color: #c4cfef;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .schema-col-pill:hover {
+      background: var(--purple);
+      border-color: var(--purple-l);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+    .template-item {
+      padding: .65rem .85rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: .5rem;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .template-item:hover {
+      background: #8b5cf615;
+      border-color: var(--purple);
+      transform: translateX(3px);
+    }
+    .template-name {
+      font-size: .82rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .template-desc {
+      font-size: .72rem;
+      color: var(--text-muted);
+      margin-top: .15rem;
+    }
+    .studio-editor-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      backdrop-filter: blur(12px);
+      display: flex;
+      flex-direction: column;
+    }
+    .studio-toolbar {
+      padding: 1rem 1.25rem;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .studio-btn-group {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+    .studio-btn {
+      padding: .5rem 1.1rem;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: .82rem;
+      font-weight: 600;
+      border: 1px solid var(--border2);
+      background: var(--bg3);
+      color: var(--text);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      transition: var(--transition);
+    }
+    .studio-btn:hover {
+      border-color: var(--purple);
+      background: #8b5cf620;
+    }
+    .studio-btn-primary {
+      background: var(--grad1);
+      border: none;
+      color: #fff;
+      box-shadow: 0 4px 14px #8b5cf640;
+    }
+    .studio-btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px #8b5cf660;
+    }
+    .studio-btn-primary:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .editor-wrapper {
+      position: relative;
+      background: #08090d;
+    }
+    #custom-sql-input {
+      width: 100%;
+      height: 180px;
+      padding: 1.1rem 1.25rem;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #e2e8f0;
+      font-family: 'Space Mono', monospace;
+      font-size: .88rem;
+      line-height: 1.6;
+      resize: vertical;
+      white-space: pre;
+    }
+    #custom-sql-input::placeholder {
+      color: #4a5070;
+    }
+    .studio-metrics-bar {
+      padding: .65rem 1.25rem;
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+      font-size: .78rem;
+      color: var(--text-muted);
+    }
+    .studio-stat-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      font-weight: 500;
+    }
+    .studio-stat-pill strong {
+      color: var(--text);
+    }
+    .studio-stat-pill.success strong {
+      color: var(--green);
+    }
+    .studio-stat-pill.error strong {
+      color: var(--red);
+    }
+    .studio-results-wrap {
+      padding: 1.25rem;
+      min-height: 200px;
+      max-height: 550px;
+      overflow: auto;
+    }
+    .studio-error-box {
+      padding: 1rem 1.25rem;
+      background: #f43f5e15;
+      border: 1px solid #f43f5e40;
+      border-radius: 8px;
+      color: #f43f5e;
+      font-size: .85rem;
+      font-family: 'Space Mono', monospace;
+      line-height: 1.5;
+    }
+    .null-cell {
+      color: #4a5070;
+      font-style: italic;
+      font-size: .75rem;
+    }
+    .kbd-shortcut {
+      font-size: .7rem;
+      padding: .15rem .4rem;
+      background: #ffffff18;
+      border-radius: 4px;
+      margin-left: .3rem;
+      font-weight: 400;
+    }
   </style>
+
 </head>
 <body>
 <div class="bg-orbs">
@@ -462,6 +701,7 @@
       <button class="nav-tab"        id="tab-users"      onclick="showTab('users')">👥 Power Users</button>
       <button class="nav-tab"        id="tab-reliability"onclick="showTab('reliability')">📡 Reliability</button>
       <button class="nav-tab"        id="tab-queries"    onclick="showTab('queries')">🔬 SQL Sandbox</button>
+      <button class="nav-tab"        id="tab-custom-sql" onclick="showTab('custom-sql')">⚡ SQL Studio</button>
     </div>
     <div class="search-wrap">
       <span class="search-icon">🔍</span>
@@ -666,6 +906,160 @@
         </div>
       </div>
     </section>
+
+    <!-- ══ CUSTOM SQL STUDIO TAB ══ -->
+    <section class="section" id="section-custom-sql">
+      <div class="section-title">⚡ Custom SQL Studio <span class="pill">Instant Live Engine</span></div>
+      <p class="section-desc">Write and execute <strong>any custom SQL query</strong> directly against the live database (<code>events</code> and <code>songs</code> tables). Click schema pills to insert column names, choose pre-built templates, or write custom CTEs, window functions, and joins with instant tabular output.</p>
+
+      <div class="studio-grid">
+        <!-- LEFT: SCHEMA & TEMPLATES -->
+        <div class="studio-sidebar">
+          <!-- SCHEMA EXPLORER -->
+          <div class="studio-card">
+            <div class="studio-card-title">
+              <span>📋 Tables & Schema</span>
+              <span class="pill" style="font-size:.65rem">Click to insert</span>
+            </div>
+
+            <div class="schema-table-box">
+              <div class="schema-table-header" onclick="insertSQL('events')">
+                <span>📁 events <span style="font-size:.72rem;color:var(--text-muted)">(8,056 rows)</span></span>
+                <span style="font-size:.75rem">➕</span>
+              </div>
+              <div class="schema-cols-wrap">
+                <span class="schema-col-pill" onclick="insertSQL('artist')">artist</span>
+                <span class="schema-col-pill" onclick="insertSQL('song')">song</span>
+                <span class="schema-col-pill" onclick="insertSQL('userId')">userId</span>
+                <span class="schema-col-pill" onclick="insertSQL('firstName')">firstName</span>
+                <span class="schema-col-pill" onclick="insertSQL('lastName')">lastName</span>
+                <span class="schema-col-pill" onclick="insertSQL('gender')">gender</span>
+                <span class="schema-col-pill" onclick="insertSQL('level')">level</span>
+                <span class="schema-col-pill" onclick="insertSQL('length')">length</span>
+                <span class="schema-col-pill" onclick="insertSQL('location')">location</span>
+                <span class="schema-col-pill" onclick="insertSQL('page')">page</span>
+                <span class="schema-col-pill" onclick="insertSQL('status')">status</span>
+                <span class="schema-col-pill" onclick="insertSQL('sessionId')">sessionId</span>
+                <span class="schema-col-pill" onclick="insertSQL('ts')">ts</span>
+                <span class="schema-col-pill" onclick="insertSQL('method')">method</span>
+                <span class="schema-col-pill" onclick="insertSQL('auth')">auth</span>
+                <span class="schema-col-pill" onclick="insertSQL('userAgent')">userAgent</span>
+              </div>
+            </div>
+
+            <div class="schema-table-box" style="margin-bottom:0">
+              <div class="schema-table-header" onclick="insertSQL('songs')">
+                <span>📁 songs <span style="font-size:.72rem;color:var(--text-muted)">(79 rows)</span></span>
+                <span style="font-size:.75rem">➕</span>
+              </div>
+              <div class="schema-cols-wrap">
+                <span class="schema-col-pill" onclick="insertSQL('title')">title</span>
+                <span class="schema-col-pill" onclick="insertSQL('artist_name')">artist_name</span>
+                <span class="schema-col-pill" onclick="insertSQL('artist_location')">artist_location</span>
+                <span class="schema-col-pill" onclick="insertSQL('duration')">duration</span>
+                <span class="schema-col-pill" onclick="insertSQL('song_id')">song_id</span>
+                <span class="schema-col-pill" onclick="insertSQL('artist_id')">artist_id</span>
+                <span class="schema-col-pill" onclick="insertSQL('year')">year</span>
+                <span class="schema-col-pill" onclick="insertSQL('artist_latitude')">artist_latitude</span>
+                <span class="schema-col-pill" onclick="insertSQL('artist_longitude')">artist_longitude</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- QUICK TEMPLATES -->
+          <div class="studio-card">
+            <div class="studio-card-title">
+              <span>💡 Quick Query Templates</span>
+            </div>
+
+            <div class="template-item" onclick="loadTemplate(1)">
+              <div class="template-name">Top 10 Longest Songs</div>
+              <div class="template-desc">Rank songs by length in minutes</div>
+            </div>
+
+            <div class="template-item" onclick="loadTemplate(2)">
+              <div class="template-name">Traffic by Page & Status</div>
+              <div class="template-desc">Breakdown of user interactions & HTTP status</div>
+            </div>
+
+            <div class="template-item" onclick="loadTemplate(3)">
+              <div class="template-name">Top Cities by Active Listeners</div>
+              <div class="template-desc">Geographic distribution of listener activity</div>
+            </div>
+
+            <div class="template-item" onclick="loadTemplate(4)">
+              <div class="template-name">Gender Breakdown & Monetization</div>
+              <div class="template-desc">Paid vs Free stream stats grouped by gender</div>
+            </div>
+
+            <div class="template-item" onclick="loadTemplate(5)">
+              <div class="template-name">Songs Catalog LEFT JOIN</div>
+              <div class="template-desc">Enrich streaming logs with catalog metadata</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: SQL EDITOR & RESULTS -->
+        <div class="studio-editor-card">
+          <!-- TOOLBAR -->
+          <div class="studio-toolbar">
+            <div class="studio-btn-group">
+              <button class="studio-btn studio-btn-primary" id="custom-sql-run-btn" onclick="executeCustomSQL()">
+                <span>▶ Run SQL</span>
+                <span class="kbd-shortcut">⌘ / Ctrl + Enter</span>
+              </button>
+              <button class="studio-btn" onclick="clearCustomSQL()">
+                <span>🧹 Clear</span>
+              </button>
+            </div>
+
+            <div class="studio-btn-group">
+              <button class="studio-btn" id="custom-sql-export-btn" onclick="exportCustomSQLCSV()" disabled>
+                <span>📥 Export CSV</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- CODE TEXTAREA -->
+          <div class="editor-wrapper">
+            <textarea id="custom-sql-input" spellcheck="false" placeholder="-- Write any SELECT query here... (e.g. SELECT * FROM events LIMIT 20)">SELECT 
+    artist,
+    song,
+    userId,
+    firstName || ' ' || lastName AS user_full_name,
+    level AS subscription_tier,
+    ROUND(length / 60.0, 2) AS duration_minutes,
+    location
+FROM events 
+WHERE page = 'NextSong' AND song IS NOT NULL
+ORDER BY length DESC
+LIMIT 20;</textarea>
+          </div>
+
+          <!-- METRICS BAR -->
+          <div class="studio-metrics-bar">
+            <div style="display:flex;align-items:center;gap:1.25rem;flex-wrap:wrap">
+              <span class="studio-stat-pill" id="studio-stat-status">⚡ Status: <strong>Ready</strong></span>
+              <span class="studio-stat-pill" id="studio-stat-time">⏱️ Time: <strong>-- ms</strong></span>
+              <span class="studio-stat-pill" id="studio-stat-rows">📊 Rows: <strong>--</strong></span>
+              <span class="studio-stat-pill" id="studio-stat-cols">📋 Columns: <strong>--</strong></span>
+            </div>
+            <div id="studio-stat-hint" style="color:var(--text-muted);font-size:.72rem">
+              Press <strong>⌘ + Enter</strong> to execute
+            </div>
+          </div>
+
+          <!-- RESULTS CONTAINER -->
+          <div class="studio-results-wrap" id="custom-sql-results">
+            <div class="no-results">
+              <div style="font-size:2rem;margin-bottom:.5rem;opacity:.5">⚡</div>
+              Click <strong>"Run SQL"</strong> or press <strong>⌘ + Enter</strong> to execute your query instantly.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
 
   </main>
 </div>
@@ -1187,18 +1581,275 @@ function closeSearch() {
 }
 
 // ══════════════════════════════════════════════
-// HELPERS
+// CUSTOM SQL STUDIO
 // ══════════════════════════════════════════════
-function setText(id, val) {
-  const el = document.getElementById(id);
-  if (el) el.textContent = val ?? '—';
+let currentCustomSQLData = null;
+
+const SQL_TEMPLATES = {
+  1: `-- Top 10 Longest Songs Streamed on the Platform
+SELECT 
+    song AS song_title,
+    artist,
+    ROUND(length / 60.0, 2) AS length_minutes,
+    level AS subscription_tier,
+    COUNT(userId) AS stream_count
+FROM events
+WHERE page = 'NextSong' AND song IS NOT NULL
+GROUP BY song, artist, length, level
+ORDER BY length DESC
+LIMIT 10;`,
+
+  2: `-- Platform Interaction Volume by Page Type & HTTP Status
+SELECT 
+    page AS interaction_page,
+    status AS http_status,
+    COUNT(*) AS request_count,
+    ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM events), 2) AS percentage_of_traffic
+FROM events
+GROUP BY page, status
+ORDER BY request_count DESC;`,
+
+  3: `-- Top 10 Cities Ranked by Total Unique Listeners
+SELECT 
+    location AS city_state,
+    COUNT(DISTINCT userId) AS unique_listeners,
+    COUNT(song) AS total_songs_streamed,
+    ROUND(SUM(length) / 3600.0, 2) AS total_listening_hours
+FROM events
+WHERE page = 'NextSong' AND location IS NOT NULL AND location != ''
+GROUP BY location
+ORDER BY unique_listeners DESC, total_songs_streamed DESC
+LIMIT 10;`,
+
+  4: `-- Gender Breakdown & Monetization Comparison
+SELECT 
+    gender,
+    level AS subscription_tier,
+    COUNT(DISTINCT userId) AS user_count,
+    COUNT(song) AS songs_streamed,
+    ROUND(SUM(length) / 3600.0, 2) AS total_hours
+FROM events
+WHERE page = 'NextSong' AND gender IS NOT NULL AND gender != ''
+GROUP BY gender, level
+ORDER BY gender, level;`,
+
+  5: `-- Catalog Enrichment: Streaming Logs LEFT JOIN Songs Metadata
+SELECT 
+    E.song AS streamed_song,
+    E.artist AS streamed_artist,
+    S.song_id,
+    S.artist_id,
+    S.artist_location,
+    S.year AS release_year,
+    COUNT(E.userId) AS play_count
+FROM events E
+LEFT JOIN songs S ON E.song = S.title
+WHERE E.page = 'NextSong' AND E.song IS NOT NULL
+GROUP BY E.song, E.artist, S.song_id, S.artist_id, S.artist_location, S.year
+ORDER BY play_count DESC
+LIMIT 20;`
+};
+
+function insertSQL(token) {
+  const textarea = document.getElementById('custom-sql-input');
+  if (!textarea) return;
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
+  const val = textarea.value;
+  textarea.value = val.substring(0, start) + token + val.substring(end);
+  textarea.focus();
+  textarea.selectionStart = textarea.selectionEnd = start + token.length;
 }
-function esc(s) {
-  if (!s) return '';
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+
+function loadTemplate(id) {
+  const tpl = SQL_TEMPLATES[id];
+  if (!tpl) return;
+  const textarea = document.getElementById('custom-sql-input');
+  if (textarea) {
+    textarea.value = tpl;
+    executeCustomSQL();
+  }
 }
-function truncate(s, n) {
-  return s && s.length > n ? s.slice(0, n) + '…' : s;
+
+function clearCustomSQL() {
+  const textarea = document.getElementById('custom-sql-input');
+  if (textarea) {
+    textarea.value = '';
+    textarea.focus();
+  }
+}
+
+async function executeCustomSQL() {
+  const textarea = document.getElementById('custom-sql-input');
+  const runBtn = document.getElementById('custom-sql-run-btn');
+  const exportBtn = document.getElementById('custom-sql-export-btn');
+  const resultsContainer = document.getElementById('custom-sql-results');
+  const statStatus = document.getElementById('studio-stat-status');
+  const statTime = document.getElementById('studio-stat-time');
+  const statRows = document.getElementById('studio-stat-rows');
+  const statCols = document.getElementById('studio-stat-cols');
+
+  const query = (textarea?.value || '').trim();
+  if (!query) {
+    resultsContainer.innerHTML = '<div class="no-results" style="color:var(--orange)">⚠️ Please enter a SQL query to execute.</div>';
+    return;
+  }
+
+  // Update UI to running state
+  runBtn.disabled = true;
+  runBtn.innerHTML = '<span>⏳ Executing...</span>';
+  statStatus.className = 'studio-stat-pill';
+  statStatus.innerHTML = '⚡ Status: <strong style="color:var(--purple-l)">Running...</strong>';
+  resultsContainer.innerHTML = '<div class="loading"><div class="spinner"></div> Executing SQL query against in-memory database...</div>';
+
+  try {
+    const res = await fetch('/api/custom_sql', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: query })
+    });
+
+    const data = await res.json();
+    runBtn.disabled = false;
+    runBtn.innerHTML = '<span>▶ Run SQL</span><span class="kbd-shortcut">⌘ / Ctrl + Enter</span>';
+
+    if (data.error) {
+      statStatus.className = 'studio-stat-pill error';
+      statStatus.innerHTML = '⚡ Status: <strong>Error</strong>';
+      statTime.innerHTML = `⏱️ Time: <strong>${data.executionTimeMs ?? 0} ms</strong>`;
+      statRows.innerHTML = '📊 Rows: <strong>0</strong>';
+      statCols.innerHTML = '📋 Columns: <strong>0</strong>';
+      exportBtn.disabled = true;
+      currentCustomSQLData = null;
+
+      resultsContainer.innerHTML = `
+        <div class="studio-error-box">
+          <div style="font-weight:700;margin-bottom:.4rem">🚨 SQL Execution Error:</div>
+          <div>${esc(data.error)}</div>
+        </div>
+      `;
+      return;
+    }
+
+    // Success
+    currentCustomSQLData = data;
+    statStatus.className = 'studio-stat-pill success';
+    statStatus.innerHTML = '⚡ Status: <strong>Success (200 OK)</strong>';
+    statTime.innerHTML = `⏱️ Time: <strong>${data.executionTimeMs} ms</strong>`;
+    statRows.innerHTML = `📊 Rows: <strong>${data.rowCount}${data.hasMore ? '+' : ''}</strong>`;
+    statCols.innerHTML = `📋 Columns: <strong>${data.columns.length}</strong>`;
+    exportBtn.disabled = !(data.rows && data.rows.length > 0);
+
+    if (!data.rows || data.rows.length === 0) {
+      resultsContainer.innerHTML = `
+        <div class="no-results">
+          <div style="font-size:1.8rem;margin-bottom:.4rem">ℹ️</div>
+          Query executed in ${data.executionTimeMs} ms, but returned <strong>0 rows</strong>.
+        </div>
+      `;
+      return;
+    }
+
+    // Render table
+    let tableHtml = `
+      <div class="results-table-wrap">
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th style="width:40px;color:var(--text-muted)">#</th>
+              ${data.columns.map(c => `<th>${esc(c)}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    data.rows.forEach((row, idx) => {
+      tableHtml += `<tr><td style="color:var(--text-muted);font-size:.7rem">${idx + 1}</td>`;
+      data.columns.forEach(col => {
+        const val = row[col];
+        if (val === null || val === undefined) {
+          tableHtml += `<td><span class="null-cell">NULL</span></td>`;
+        } else if (typeof val === 'number') {
+          tableHtml += `<td style="color:#67e8f9">${val.toLocaleString()}</td>`;
+        } else {
+          tableHtml += `<td>${esc(String(val))}</td>`;
+        }
+      });
+      tableHtml += `</tr>`;
+    });
+
+    tableHtml += `
+          </tbody>
+        </table>
+      </div>
+      ${data.hasMore ? '<div style="margin-top:.75rem;font-size:.75rem;color:var(--text-muted);text-align:right">Showing first 500 rows. Add a LIMIT clause for specific subsets.</div>' : ''}
+    `;
+
+    resultsContainer.innerHTML = tableHtml;
+
+  } catch (err) {
+    runBtn.disabled = false;
+    runBtn.innerHTML = '<span>▶ Run SQL</span><span class="kbd-shortcut">⌘ / Ctrl + Enter</span>';
+    statStatus.className = 'studio-stat-pill error';
+    statStatus.innerHTML = '⚡ Status: <strong>Network Error</strong>';
+    resultsContainer.innerHTML = `
+      <div class="studio-error-box">
+        <strong>Network / Server Error:</strong> ${esc(err.message)}
+      </div>
+    `;
+  }
+}
+
+function exportCustomSQLCSV() {
+  if (!currentCustomSQLData || !currentCustomSQLData.rows || !currentCustomSQLData.rows.length) return;
+  const cols = currentCustomSQLData.columns;
+  const rows = currentCustomSQLData.rows;
+
+  let csvContent = cols.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',') + '\n';
+  rows.forEach(r => {
+    const line = cols.map(c => {
+      const v = r[c];
+      if (v === null || v === undefined) return '""';
+      return `"${String(v).replace(/"/g, '""')}"`;
+    }).join(',');
+    csvContent += line + '\n';
+  });
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `soundpulse_custom_query_${Date.now()}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ══════════════════════════════════════════════
+// KEYBOARD SHORTCUTS & EDITOR SETUP
+// ══════════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+    const activeSection = document.getElementById('section-custom-sql');
+    if (activeSection && activeSection.classList.contains('active')) {
+      e.preventDefault();
+      executeCustomSQL();
+    }
+  }
+});
+
+const sqlInput = document.getElementById('custom-sql-input');
+if (sqlInput) {
+  sqlInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const start = this.selectionStart;
+      const end = this.selectionEnd;
+      this.value = this.value.substring(0, start) + '    ' + this.value.substring(end);
+      this.selectionStart = this.selectionEnd = start + 4;
+    }
+  });
 }
 
 // ══════════════════════════════════════════════
@@ -1211,3 +1862,4 @@ function truncate(s, n) {
 </script>
 </body>
 </html>
+

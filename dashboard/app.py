@@ -571,6 +571,73 @@ def run_query(query_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/schema')
+def get_schema():
+    """Return the schema of available tables and columns for the SQL editor."""
+    cur = _conn.cursor()
+    tables = {}
+    for table_name in ['events', 'songs']:
+        cols = cur.execute(f"PRAGMA table_info({table_name})").fetchall()
+        count = cur.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]
+        tables[table_name] = {
+            'count': count,
+            'columns': [{'name': col['name'], 'type': col['type']} for col in cols]
+        }
+    return jsonify(tables)
+
+@app.route('/api/custom_sql', methods=['POST'])
+def run_custom_sql():
+    """Execute any custom SQL query submitted by the user."""
+    import time
+    data = request.get_json(silent=True) or {}
+    sql = (data.get('query') or '').strip()
+
+    if not sql:
+        return jsonify({'error': 'SQL query cannot be empty'}), 400
+
+    # Strip trailing semicolons for uniform execution
+    cleaned_sql = sql.rstrip(';').strip()
+
+    # Safety check: allow read queries
+    first_word = cleaned_sql.split()[0].upper() if cleaned_sql.split() else ''
+    allowed_starts = ('SELECT', 'WITH', 'EXPLAIN', 'PRAGMA', 'VALUES')
+    if first_word not in allowed_starts:
+        return jsonify({'error': f'Only read queries ({", ".join(allowed_starts)}) are allowed.'}), 400
+
+    cur = _conn.cursor()
+    start_time = time.perf_counter()
+    try:
+        cur.execute(cleaned_sql)
+        duration_ms = round((time.perf_counter() - start_time) * 1000, 2)
+        if cur.description is None:
+            return jsonify({
+                'columns': [],
+                'rows': [],
+                'rowCount': 0,
+                'executionTimeMs': duration_ms,
+                'message': 'Query executed successfully with 0 result rows.'
+            })
+
+        cols = [d[0] for d in cur.description]
+        # Cap at 500 rows for smooth UI rendering
+        raw_rows = cur.fetchmany(500)
+        rows = [dict(zip(cols, row)) for row in raw_rows]
+        has_more = len(rows) == 500 and cur.fetchone() is not None
+
+        return jsonify({
+            'columns': cols,
+            'rows': rows,
+            'rowCount': len(rows),
+            'hasMore': has_more,
+            'executionTimeMs': duration_ms
+        })
+    except Exception as e:
+        duration_ms = round((time.perf_counter() - start_time) * 1000, 2)
+        return jsonify({
+            'error': str(e),
+            'executionTimeMs': duration_ms
+        }), 400
+
 # ─────────────────────────────────────────────
 # STARTUP
 # init_db() is called at module load time so that gunicorn workers
