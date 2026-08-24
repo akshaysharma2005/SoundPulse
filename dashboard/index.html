@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SoundPulse — Music Streaming Analytics</title>
+  <meta name="description" content="Interactive analytics dashboard for a music streaming platform. Explore top songs, artists, power users, monetization, and platform reliability in real time." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    /* ═══════════════════════════════════════════
+       DESIGN TOKENS
+    ═══════════════════════════════════════════ */
+    :root {
+      --bg:        #0a0b0f;
+      --bg2:       #111318;
+      --bg3:       #1a1d26;
+      --card:      #16192280;
+      --card-solid:#161922;
+      --border:    #ffffff14;
+      --border2:   #ffffff22;
+      --text:      #e8eaf0;
+      --text-muted:#7a80a0;
+      --text-dim:  #4a5070;
+      --purple:    #8b5cf6;
+      --purple-l:  #a78bfa;
+      --pink:      #ec4899;
+      --cyan:      #22d3ee;
+      --green:     #10b981;
+      --orange:    #f59e0b;
+      --red:       #f43f5e;
+      --grad1: linear-gradient(135deg, #8b5cf6, #ec4899);
+      --grad2: linear-gradient(135deg, #22d3ee, #10b981);
+      --grad3: linear-gradient(135deg, #f59e0b, #f43f5e);
+      --grad4: linear-gradient(135deg, #8b5cf6, #22d3ee);
+      --glow-purple: 0 0 40px #8b5cf640;
+      --glow-cyan:   0 0 40px #22d3ee30;
+      --radius: 16px;
+      --radius-sm: 10px;
+      --transition: .25s cubic-bezier(.4,0,.2,1);
+    }
+
+    /* ═══════════════════════════════════════════
+       RESET & BASE
+    ═══════════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg2); }
+    ::-webkit-scrollbar-thumb { background: var(--purple); border-radius: 3px; }
+
+    /* ═══════════════════════════════════════════
+       ANIMATED BACKGROUND
+    ═══════════════════════════════════════════ */
+    .bg-orbs {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+    }
+    .orb {
+      position: absolute; border-radius: 50%; filter: blur(120px); opacity: .12;
+      animation: float 20s ease-in-out infinite;
+    }
+    .orb1 { width:600px; height:600px; background:var(--purple); top:-200px; left:-200px; animation-duration:25s; }
+    .orb2 { width:500px; height:500px; background:var(--pink);   bottom:-100px; right:-100px; animation-duration:30s; animation-delay:-8s; }
+    .orb3 { width:400px; height:400px; background:var(--cyan);   top:40%; left:40%; animation-duration:20s; animation-delay:-15s; }
+    @keyframes float {
+      0%,100% { transform: translate(0,0) scale(1); }
+      33%      { transform: translate(30px,-40px) scale(1.05); }
+      66%      { transform: translate(-20px,30px) scale(.95); }
+    }
+
+    /* ═══════════════════════════════════════════
+       LAYOUT
+    ═══════════════════════════════════════════ */
+    .app { position: relative; z-index: 1; }
+
+    /* ── NAV ── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: #0a0b0fcc;
+      backdrop-filter: blur(24px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex; align-items: center; gap: 1.5rem; height: 64px;
+    }
+    .logo {
+      display: flex; align-items: center; gap: .6rem;
+      font-size: 1.2rem; font-weight: 800; letter-spacing: -.5px;
+      background: var(--grad1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      flex-shrink: 0;
+    }
+    .logo-icon { font-size: 1.4rem; filter: drop-shadow(0 0 8px #8b5cf6); }
+    .nav-tabs {
+      display: flex; gap: .25rem; flex: 1; overflow-x: auto;
+    }
+    .nav-tab {
+      padding: .45rem 1rem; border-radius: 8px; border: none; cursor: pointer;
+      font-family: inherit; font-size: .85rem; font-weight: 500;
+      color: var(--text-muted); background: transparent;
+      transition: var(--transition); white-space: nowrap;
+    }
+    .nav-tab:hover { color: var(--text); background: var(--bg3); }
+    .nav-tab.active { color: #fff; background: var(--purple); box-shadow: var(--glow-purple); }
+    .search-wrap { position: relative; flex-shrink: 0; }
+    #global-search {
+      width: 220px; padding: .5rem 1rem .5rem 2.4rem;
+      background: var(--bg3); border: 1px solid var(--border2);
+      border-radius: 10px; color: var(--text); font-family: inherit; font-size: .85rem;
+      outline: none; transition: var(--transition);
+    }
+    #global-search:focus { border-color: var(--purple); box-shadow: 0 0 0 3px #8b5cf620; }
+    .search-icon { position: absolute; left: .75rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: .9rem; }
+
+    /* ── MAIN ── */
+    main { padding: 2rem; max-width: 1400px; margin: 0 auto; }
+
+    /* ═══════════════════════════════════════════
+       SECTIONS (tabs)
+    ═══════════════════════════════════════════ */
+    .section { display: none; }
+    .section.active { display: block; animation: fadeIn .3s ease; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+    /* ═══════════════════════════════════════════
+       KPI CARDS
+    ═══════════════════════════════════════════ */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.25rem; margin-bottom: 2rem;
+    }
+    .kpi-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.4rem 1.5rem;
+      position: relative; overflow: hidden;
+      backdrop-filter: blur(12px);
+      transition: var(--transition);
+    }
+    .kpi-card:hover { border-color: var(--border2); transform: translateY(-2px); box-shadow: 0 8px 32px #0006; }
+    .kpi-card::before {
+      content: ''; position: absolute; inset: 0;
+      background: var(--grad); opacity: .06; z-index: 0;
+    }
+    .kpi-label {
+      font-size: .75rem; font-weight: 600; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--text-muted); margin-bottom: .6rem;
+    }
+    .kpi-value {
+      font-size: 2rem; font-weight: 800; line-height: 1;
+      background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .kpi-sub { font-size: .78rem; color: var(--text-muted); margin-top: .4rem; }
+    .kpi-icon {
+      position: absolute; right: 1.2rem; top: 50%; transform: translateY(-50%);
+      font-size: 2rem; opacity: .18;
+    }
+
+    /* ═══════════════════════════════════════════
+       SECTION HEADINGS
+    ═══════════════════════════════════════════ */
+    .section-title {
+      font-size: 1.4rem; font-weight: 700; margin-bottom: 1.5rem;
+      display: flex; align-items: center; gap: .6rem;
+    }
+    .section-title .pill {
+      font-size: .7rem; padding: .25rem .6rem; border-radius: 20px;
+      background: var(--purple); color: #fff; font-weight: 600;
+    }
+    .section-desc { color: var(--text-muted); font-size: .9rem; margin-bottom: 1.5rem; line-height: 1.6; }
+
+    /* ═══════════════════════════════════════════
+       CHARTS GRID
+    ═══════════════════════════════════════════ */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+    .charts-grid.three-col { grid-template-columns: 2fr 1fr 1fr; }
+    @media (max-width: 900px) {
+      .charts-grid, .charts-grid.three-col { grid-template-columns: 1fr; }
+    }
+    .chart-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.5rem;
+      backdrop-filter: blur(12px); transition: var(--transition);
+    }
+    .chart-card:hover { border-color: var(--border2); }
+    .chart-card.span2 { grid-column: span 2; }
+    @media (max-width: 900px) { .chart-card.span2 { grid-column: span 1; } }
+    .chart-title {
+      font-size: .9rem; font-weight: 600; margin-bottom: 1.2rem; color: var(--text-muted);
+      letter-spacing: .04em; text-transform: uppercase; font-size: .75rem;
+    }
+    .chart-container { position: relative; }
+
+    /* ═══════════════════════════════════════════
+       DATA TABLES
+    ═══════════════════════════════════════════ */
+    .table-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden;
+      backdrop-filter: blur(12px); margin-bottom: 1.5rem;
+    }
+    .table-header {
+      padding: 1.2rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    }
+    .table-header h3 { font-size: 1rem; font-weight: 600; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: .875rem; }
+    th {
+      padding: .8rem 1.2rem; text-align: left;
+      font-size: .72rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+      color: var(--text-muted); background: var(--bg2); border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    td { padding: .85rem 1.2rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tbody tr { transition: var(--transition); }
+    tbody tr:hover { background: #ffffff06; }
+    .rank-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 28px; height: 28px; border-radius: 8px;
+      font-weight: 700; font-size: .8rem;
+      background: var(--bg3); color: var(--text-muted);
+    }
+    .rank-badge.gold   { background: linear-gradient(135deg,#f59e0b,#d97706); color:#fff; }
+    .rank-badge.silver { background: linear-gradient(135deg,#94a3b8,#64748b); color:#fff; }
+    .rank-badge.bronze { background: linear-gradient(135deg,#b45309,#92400e); color:#fff; }
+    .level-pill {
+      display: inline-block; padding: .2rem .6rem; border-radius: 20px;
+      font-size: .72rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+    }
+    .level-paid { background: #10b98120; color: #10b981; border: 1px solid #10b98130; }
+    .level-free { background: #8b5cf620; color: #a78bfa; border: 1px solid #8b5cf630; }
+    .song-link {
+      color: var(--text); text-decoration: none; cursor: pointer;
+      font-weight: 500; transition: var(--transition);
+    }
+    .song-link:hover { color: var(--purple-l); text-decoration: underline; }
+
+    /* ═══════════════════════════════════════════
+       PROGRESS BAR
+    ═══════════════════════════════════════════ */
+    .bar-wrap { display: flex; align-items: center; gap: .8rem; }
+    .bar-track { flex: 1; height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+    .bar-fill  { height: 100%; border-radius: 3px; transition: width .6s cubic-bezier(.4,0,.2,1); }
+    .bar-label { font-size: .8rem; color: var(--text-muted); white-space: nowrap; min-width: 40px; text-align: right; }
+
+    /* ═══════════════════════════════════════════
+       SEARCH RESULTS
+    ═══════════════════════════════════════════ */
+    #search-results {
+      position: absolute; top: calc(100% + 6px); right: 0; width: 480px;
+      background: var(--bg2); border: 1px solid var(--border2);
+      border-radius: var(--radius); box-shadow: 0 24px 64px #00000080;
+      overflow: hidden; z-index: 200; display: none;
+    }
+    #search-results.visible { display: block; animation: fadeIn .2s ease; }
+    .sr-section { padding: .75rem 1rem; }
+    .sr-title { font-size: .72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: .5rem; }
+    .sr-item {
+      display: flex; align-items: center; gap: .75rem; padding: .5rem .6rem;
+      border-radius: 8px; cursor: pointer; transition: var(--transition);
+    }
+    .sr-item:hover { background: var(--bg3); }
+    .sr-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+    .sr-name { font-size: .875rem; font-weight: 500; }
+    .sr-meta { font-size: .75rem; color: var(--text-muted); }
+    .sr-divider { border: none; border-top: 1px solid var(--border); margin: 0; }
+
+    /* ═══════════════════════════════════════════
+       SONG INSPECTOR DRAWER
+    ═══════════════════════════════════════════ */
+    #inspector-overlay {
+      position: fixed; inset: 0; background: #000000a0; z-index: 300; display: none;
+      backdrop-filter: blur(4px);
+    }
+    #inspector-overlay.visible { display: block; }
+    #inspector-drawer {
+      position: fixed; top: 0; right: -600px; width: min(600px, 100vw);
+      height: 100vh; background: var(--bg2); border-left: 1px solid var(--border2);
+      z-index: 301; overflow-y: auto; transition: right .35s cubic-bezier(.4,0,.2,1);
+      display: flex; flex-direction: column;
+    }
+    #inspector-drawer.open { right: 0; }
+    .drawer-header {
+      padding: 1.5rem; border-bottom: 1px solid var(--border);
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;
+      position: sticky; top: 0; background: var(--bg2); z-index: 1;
+    }
+    .drawer-title { font-size: 1.1rem; font-weight: 700; }
+    .drawer-subtitle { font-size: .85rem; color: var(--text-muted); margin-top: .3rem; }
+    .drawer-close {
+      width: 36px; height: 36px; border-radius: 8px;
+      background: var(--bg3); border: 1px solid var(--border);
+      color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; transition: var(--transition); flex-shrink: 0;
+    }
+    .drawer-close:hover { color: var(--text); border-color: var(--border2); }
+    .drawer-sort {
+      padding: 1rem 1.5rem; border-bottom: 1px solid var(--border);
+      display: flex; gap: .5rem; align-items: center; flex-wrap: wrap;
+    }
+    .sort-label { font-size: .78rem; color: var(--text-muted); }
+    .sort-btn {
+      padding: .3rem .8rem; border-radius: 6px; border: 1px solid var(--border2);
+      background: transparent; color: var(--text-muted); font-size: .78rem; cursor: pointer;
+      font-family: inherit; transition: var(--transition);
+    }
+    .sort-btn:hover { border-color: var(--purple); color: var(--text); }
+    .sort-btn.active { background: var(--purple); color: #fff; border-color: var(--purple); }
+    .drawer-body { padding: 1rem 1.5rem; flex: 1; }
+    .listener-row {
+      display: flex; align-items: center; gap: 1rem; padding: .8rem .8rem;
+      border-radius: 10px; transition: var(--transition); margin-bottom: .25rem;
+    }
+    .listener-row:hover { background: var(--bg3); }
+    .listener-avatar {
+      width: 40px; height: 40px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 1rem; flex-shrink: 0;
+    }
+    .listener-info { flex: 1; min-width: 0; }
+    .listener-name { font-weight: 600; font-size: .9rem; }
+    .listener-meta { font-size: .78rem; color: var(--text-muted); margin-top: .15rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .listener-plays { font-size: .85rem; font-weight: 700; color: var(--purple-l); white-space: nowrap; }
+
+    /* ═══════════════════════════════════════════
+       SQL QUERY SANDBOX
+    ═══════════════════════════════════════════ */
+    .query-grid { display: grid; grid-template-columns: 320px 1fr; gap: 1.5rem; }
+    @media (max-width: 900px) { .query-grid { grid-template-columns: 1fr; } }
+    .query-list { display: flex; flex-direction: column; gap: .5rem; }
+    .query-item {
+      padding: 1rem 1.2rem; border-radius: var(--radius-sm);
+      background: var(--card); border: 1px solid var(--border);
+      cursor: pointer; transition: var(--transition);
+    }
+    .query-item:hover { border-color: var(--border2); background: var(--bg3); }
+    .query-item.active { border-color: var(--purple); background: #8b5cf615; }
+    .query-num { font-size: .7rem; font-weight: 700; color: var(--purple); margin-bottom: .3rem; letter-spacing: .05em; }
+    .query-name { font-size: .875rem; font-weight: 600; line-height: 1.3; }
+    .query-bug { margin-top: .4rem; }
+    .bug-badge {
+      display: inline-block; padding: .15rem .5rem; border-radius: 4px;
+      background: #f43f5e20; color: #f43f5e; border: 1px solid #f43f5e30;
+      font-size: .65rem; font-weight: 700; letter-spacing: .05em;
+    }
+    .query-detail {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden;
+    }
+    .query-detail-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg2);
+    }
+    .query-detail-title { font-size: 1.1rem; font-weight: 700; margin-bottom: .4rem; }
+    .query-detail-desc { font-size: .875rem; color: var(--text-muted); line-height: 1.6; }
+    .query-biz { margin-top: .75rem; padding: .75rem 1rem; background: #8b5cf610; border-radius: 8px; border-left: 3px solid var(--purple); }
+    .query-biz-label { font-size: .7rem; font-weight: 700; color: var(--purple); letter-spacing: .08em; text-transform: uppercase; }
+    .query-biz-text { font-size: .875rem; color: var(--text); margin-top: .2rem; }
+    .query-fix { margin-top: .75rem; padding: .75rem 1rem; background: #f43f5e10; border-radius: 8px; border-left: 3px solid var(--red); }
+    .query-fix-label { font-size: .7rem; font-weight: 700; color: var(--red); letter-spacing: .08em; text-transform: uppercase; }
+    .query-fix-text { font-size: .875rem; color: var(--text); margin-top: .2rem; }
+    .query-sql {
+      padding: 1.2rem 1.5rem; border-bottom: 1px solid var(--border);
+    }
+    .sql-label { font-size: .72rem; font-weight: 600; color: var(--text-muted); letter-spacing: .08em; text-transform: uppercase; margin-bottom: .75rem; }
+    pre {
+      font-family: 'Space Mono', monospace; font-size: .8rem;
+      color: #c4cfef; background: var(--bg); border-radius: 10px;
+      padding: 1.2rem; overflow-x: auto; line-height: 1.7;
+      border: 1px solid var(--border);
+    }
+    /* basic SQL syntax highlight */
+    .kw  { color: #a78bfa; font-weight: 700; }
+    .fn  { color: #22d3ee; }
+    .str { color: #10b981; }
+    .cmt { color: #4a5070; font-style: italic; }
+    .num { color: #f59e0b; }
+    .run-btn {
+      display: inline-flex; align-items: center; gap: .5rem;
+      padding: .6rem 1.4rem; border-radius: 10px;
+      background: var(--grad1); color: #fff;
+      font-family: inherit; font-size: .875rem; font-weight: 600;
+      border: none; cursor: pointer; transition: var(--transition);
+      box-shadow: 0 4px 16px #8b5cf640;
+    }
+    .run-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px #8b5cf660; }
+    .run-btn:active { transform: translateY(0); }
+    .run-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+    .query-results { padding: 1.5rem; }
+    .results-label { font-size: .72rem; font-weight: 600; color: var(--text-muted); letter-spacing: .08em; text-transform: uppercase; margin-bottom: .75rem; }
+    .results-table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid var(--border); }
+    .results-table { width: 100%; border-collapse: collapse; font-size: .8rem; font-family: 'Space Mono', monospace; }
+    .results-table th { background: var(--bg2); color: var(--purple-l); font-size: .7rem; letter-spacing: .06em; padding: .6rem .9rem; white-space: nowrap; }
+    .results-table td { padding: .6rem .9rem; border-top: 1px solid var(--border); color: var(--text); }
+    .results-table tr:hover td { background: #ffffff05; }
+    .no-results { text-align: center; color: var(--text-muted); padding: 2rem; font-size: .875rem; }
+
+    /* ═══════════════════════════════════════════
+       LOADING SPINNER
+    ═══════════════════════════════════════════ */
+    .loading {
+      display: flex; align-items: center; justify-content: center;
+      gap: .6rem; color: var(--text-muted); font-size: .875rem; padding: 2rem;
+    }
+    .spinner {
+      width: 20px; height: 20px; border: 2px solid var(--border2);
+      border-top-color: var(--purple); border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ═══════════════════════════════════════════
+       MISC UTILITIES
+    ═══════════════════════════════════════════ */
+    .flex-between { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+    .mb-1 { margin-bottom: 1rem; }
+    .mb-2 { margin-bottom: 2rem; }
+    .text-muted { color: var(--text-muted); }
+    .text-sm { font-size: .875rem; }
+    .empty-state { text-align: center; padding: 3rem; color: var(--text-muted); }
+    .empty-state .empty-icon { font-size: 3rem; margin-bottom: .75rem; opacity: .3; }
+    .tag {
+      display: inline-block; padding: .2rem .6rem; border-radius: 4px;
+      font-size: .72rem; font-weight: 600; background: var(--bg3); color: var(--text-muted);
+    }
+    .success-bar { height: 8px; border-radius: 4px; overflow: hidden; background: var(--bg3); margin-top: .4rem; }
+    .success-fill { height: 100%; background: var(--green); border-radius: 4px; }
+  </style>
+</head>
+<body>
+<div class="bg-orbs">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+</div>
+
+<div class="app">
+  <!-- ════════ NAV ════════ -->
+  <nav>
+    <div class="logo">
+      <span class="logo-icon">🎵</span>
+      SoundPulse
+    </div>
+    <div class="nav-tabs">
+      <button class="nav-tab active" id="tab-overview"   onclick="showTab('overview')">📊 Overview</button>
+      <button class="nav-tab"        id="tab-songs"      onclick="showTab('songs')">🎵 Top Songs</button>
+      <button class="nav-tab"        id="tab-artists"    onclick="showTab('artists')">🎤 Artists</button>
+      <button class="nav-tab"        id="tab-users"      onclick="showTab('users')">👥 Power Users</button>
+      <button class="nav-tab"        id="tab-reliability"onclick="showTab('reliability')">📡 Reliability</button>
+      <button class="nav-tab"        id="tab-queries"    onclick="showTab('queries')">🔬 SQL Sandbox</button>
+    </div>
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="global-search" placeholder="Search songs, artists, users…" autocomplete="off" />
+      <div id="search-results"></div>
+    </div>
+  </nav>
+
+  <!-- ════════ MAIN ════════ -->
+  <main>
+
+    <!-- ══ OVERVIEW TAB ══ -->
+    <section class="section active" id="section-overview">
+      <div class="section-title">Platform Overview <span class="pill">Live</span></div>
+
+      <!-- KPI CARDS -->
+      <div class="kpi-grid" id="kpi-grid">
+        <div class="kpi-card" style="--grad:var(--grad1)">
+          <div class="kpi-label">Total Songs</div>
+          <div class="kpi-value" id="kpi-songs">—</div>
+          <div class="kpi-sub">Unique tracks streamed</div>
+          <div class="kpi-icon">🎵</div>
+        </div>
+        <div class="kpi-card" style="--grad:var(--grad2)">
+          <div class="kpi-label">Total Artists</div>
+          <div class="kpi-value" id="kpi-artists">—</div>
+          <div class="kpi-sub">Active on platform</div>
+          <div class="kpi-icon">🎤</div>
+        </div>
+        <div class="kpi-card" style="--grad:var(--grad4)">
+          <div class="kpi-label">Active Users</div>
+          <div class="kpi-value" id="kpi-users">—</div>
+          <div class="kpi-sub">Across all sessions</div>
+          <div class="kpi-icon">👥</div>
+        </div>
+        <div class="kpi-card" style="--grad:var(--grad2)">
+          <div class="kpi-label">Listening Hours</div>
+          <div class="kpi-value" id="kpi-hours">—</div>
+          <div class="kpi-sub">Total platform time</div>
+          <div class="kpi-icon">⏱️</div>
+        </div>
+        <div class="kpi-card" style="--grad:var(--grad3)">
+          <div class="kpi-label">Paid Stream Ratio</div>
+          <div class="kpi-value" id="kpi-paid">—</div>
+          <div class="kpi-sub">Of all NextSong events</div>
+          <div class="kpi-icon">💳</div>
+        </div>
+        <div class="kpi-card" style="--grad:var(--grad2)">
+          <div class="kpi-label">Platform Success Rate</div>
+          <div class="kpi-value" id="kpi-success">—</div>
+          <div class="kpi-sub">HTTP 200 across all requests</div>
+          <div class="kpi-icon">✅</div>
+        </div>
+      </div>
+
+      <!-- CHARTS ROW 1 -->
+      <div class="charts-grid mb-2">
+        <div class="chart-card">
+          <div class="chart-title">🎵 Top 10 Most Played Songs</div>
+          <div class="chart-container">
+            <canvas id="chart-top-songs" height="280"></canvas>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">🎤 Top 10 Artists by Listener Count</div>
+          <div class="chart-container">
+            <canvas id="chart-top-artists" height="280"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHARTS ROW 2 -->
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-title">💳 Free vs. Paid Listening Distribution</div>
+          <div class="chart-container" style="max-height:280px; display:flex; align-items:center; justify-content:center;">
+            <canvas id="chart-monetization" height="260" style="max-width:300px;"></canvas>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">📡 HTTP Status Code Distribution</div>
+          <div class="chart-container" style="max-height:280px; display:flex; align-items:center; justify-content:center;">
+            <canvas id="chart-status" height="260" style="max-width:300px;"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ TOP SONGS TAB ══ -->
+    <section class="section" id="section-songs">
+      <div class="section-title">🎵 Top Songs <span class="pill">Interactive</span></div>
+      <p class="section-desc">Click any song name to open the <strong>Song Inspector</strong> — see every listener sorted by play count, account tier, last listen time, and location.</p>
+      <div class="table-card">
+        <div class="table-header">
+          <h3>Most Played Songs</h3>
+          <span class="text-muted text-sm">Click a song to inspect its listeners →</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Song</th>
+                <th>Artist</th>
+                <th>Tier</th>
+                <th>Play Count</th>
+                <th>Popularity</th>
+              </tr>
+            </thead>
+            <tbody id="songs-table-body">
+              <tr><td colspan="6"><div class="loading"><div class="spinner"></div> Loading…</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ ARTISTS TAB ══ -->
+    <section class="section" id="section-artists">
+      <div class="section-title">🎤 Top Artists</div>
+      <p class="section-desc">Artists ranked by unique listener count — shows broad audience reach rather than raw play volume.</p>
+      <div class="table-card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Artist</th>
+                <th>Unique Listeners</th>
+                <th>Unique Songs</th>
+                <th>Listener Reach</th>
+              </tr>
+            </thead>
+            <tbody id="artists-table-body">
+              <tr><td colspan="5"><div class="loading"><div class="spinner"></div> Loading…</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ POWER USERS TAB ══ -->
+    <section class="section" id="section-users">
+      <div class="section-title">👥 Power User Leaderboard</div>
+      <p class="section-desc">Users ranked by total songs played across all sessions. These are your highest-value listeners and retention targets.</p>
+      <div class="table-card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>User</th>
+                <th>Gender</th>
+                <th>Location</th>
+                <th>Tier</th>
+                <th>Songs Played</th>
+                <th>Hours Listened</th>
+              </tr>
+            </thead>
+            <tbody id="users-table-body">
+              <tr><td colspan="7"><div class="loading"><div class="spinner"></div> Loading…</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ RELIABILITY TAB ══ -->
+    <section class="section" id="section-reliability">
+      <div class="section-title">📡 Platform Reliability</div>
+      <p class="section-desc">True HTTP success rates per user across <em>all</em> platform interactions — including 404 Not Found and 307 Temporary Redirect errors. This reveals the real-world platform health that was hidden by the original Query 8 bug.</p>
+      <div class="table-card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Total Requests</th>
+                <th>Successful (200)</th>
+                <th>Success Rate</th>
+              </tr>
+            </thead>
+            <tbody id="reliability-table-body">
+              <tr><td colspan="4"><div class="loading"><div class="spinner"></div> Loading…</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ SQL SANDBOX TAB ══ -->
+    <section class="section" id="section-queries">
+      <div class="section-title">🔬 SQL Query Sandbox</div>
+      <p class="section-desc">Browse all 10 analytical SQL queries. Queries marked <span class="bug-badge">BUG FIXED</span> were corrected from the original scripts. Click <strong>Run Query</strong> to execute against the live dataset.</p>
+      <div class="query-grid">
+        <div class="query-list" id="query-list"></div>
+        <div class="query-detail" id="query-detail">
+          <div class="empty-state">
+            <div class="empty-icon">🔬</div>
+            <p>Select a query from the left to view its SQL and run it against the live dataset.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ════════ SONG INSPECTOR DRAWER ════════ -->
+<div id="inspector-overlay" onclick="closeInspector()"></div>
+<div id="inspector-drawer">
+  <div class="drawer-header">
+    <div>
+      <div class="drawer-title" id="drawer-song-name">Song Inspector</div>
+      <div class="drawer-subtitle" id="drawer-song-meta"></div>
+    </div>
+    <button class="drawer-close" onclick="closeInspector()">✕</button>
+  </div>
+  <div class="drawer-sort">
+    <span class="sort-label">Sort by:</span>
+    <button class="sort-btn active" id="sort-plays"    onclick="setSort('play_count')">Play Count</button>
+    <button class="sort-btn"        id="sort-recent"   onclick="setSort('ts')">Most Recent</button>
+    <button class="sort-btn"        id="sort-tier"     onclick="setSort('level')">Tier</button>
+    <button class="sort-btn"        id="sort-location" onclick="setSort('location')">Location</button>
+  </div>
+  <div class="drawer-body" id="drawer-body">
+    <div class="loading"><div class="spinner"></div> Loading listeners…</div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+let currentTab    = 'overview';
+let currentSort   = 'play_count';
+let currentSong   = '';
+let queriesData   = [];
+let selectedQuery = null;
+let maxPlays      = 1; // for bar normalisation
+
+// ══════════════════════════════════════════════
+// TAB NAVIGATION
+// ══════════════════════════════════════════════
+function showTab(tab) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('section-' + tab).classList.add('active');
+  document.getElementById('tab-' + tab).classList.add('active');
+  currentTab = tab;
+
+  if (tab === 'songs'   && !songsLoaded)   loadSongsTable();
+  if (tab === 'artists' && !artistsLoaded) loadArtistsTable();
+  if (tab === 'users'   && !usersLoaded)   loadUsersTable();
+  if (tab === 'reliability' && !reliabilityLoaded) loadReliabilityTable();
+  if (tab === 'queries' && !queriesDataLoaded) loadQueriesList();
+}
+let songsLoaded = false, artistsLoaded = false, usersLoaded = false, reliabilityLoaded = false, queriesDataLoaded = false;
+
+// ══════════════════════════════════════════════
+// CHART.JS DEFAULTS
+// ══════════════════════════════════════════════
+Chart.defaults.color = '#7a80a0';
+Chart.defaults.font.family = "'Inter', sans-serif";
+Chart.defaults.plugins.legend.labels.padding = 16;
+Chart.defaults.plugins.tooltip.padding = 10;
+Chart.defaults.plugins.tooltip.cornerRadius = 8;
+Chart.defaults.plugins.tooltip.backgroundColor = '#1a1d26';
+Chart.defaults.plugins.tooltip.borderColor = '#ffffff22';
+Chart.defaults.plugins.tooltip.borderWidth = 1;
+
+const PURPLE = '#8b5cf6';
+const PINK   = '#ec4899';
+const CYAN   = '#22d3ee';
+const GREEN  = '#10b981';
+const ORANGE = '#f59e0b';
+const RED    = '#f43f5e';
+
+const BAR_COLORS = [
+  '#8b5cf6','#a78bfa','#ec4899','#f472b6','#22d3ee',
+  '#67e8f9','#10b981','#34d399','#f59e0b','#fbbf24',
+];
+
+// ══════════════════════════════════════════════
+// KPI CARDS
+// ══════════════════════════════════════════════
+async function loadKPIs() {
+  const data = await fetch('/api/kpis').then(r => r.json());
+  setText('kpi-songs',   data.total_songs?.toLocaleString());
+  setText('kpi-artists', data.total_artists?.toLocaleString());
+  setText('kpi-users',   data.total_users?.toLocaleString());
+  setText('kpi-hours',   data.listening_hours?.toLocaleString() + 'h');
+  setText('kpi-paid',    data.paid_ratio + '%');
+  setText('kpi-success', data.success_rate + '%');
+}
+
+// ══════════════════════════════════════════════
+// OVERVIEW CHARTS
+// ══════════════════════════════════════════════
+async function loadOverviewCharts() {
+  const [songs, artists, mon, status] = await Promise.all([
+    fetch('/api/top_songs?limit=10').then(r => r.json()),
+    fetch('/api/top_artists?limit=10').then(r => r.json()),
+    fetch('/api/monetization').then(r => r.json()),
+    fetch('/api/status_distribution').then(r => r.json()),
+  ]);
+
+  // Top Songs Bar
+  new Chart(document.getElementById('chart-top-songs'), {
+    type: 'bar',
+    data: {
+      labels: songs.map(s => truncate(s.name, 22)),
+      datasets: [{
+        data: songs.map(s => s.play_count),
+        backgroundColor: BAR_COLORS,
+        borderRadius: 6, borderSkipped: false,
+      }]
+    },
+    options: {
+      indexAxis: 'y', responsive: true,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.raw} plays` } } },
+      scales: {
+        x: { grid: { color: '#ffffff08' }, ticks: { color: '#7a80a0' } },
+        y: { grid: { display: false }, ticks: { color: '#e8eaf0', font: { size: 11 } } },
+      }
+    }
+  });
+
+  // Top Artists Bar
+  new Chart(document.getElementById('chart-top-artists'), {
+    type: 'bar',
+    data: {
+      labels: artists.map(a => truncate(a.name, 22)),
+      datasets: [{
+        data: artists.map(a => a.listener_count),
+        backgroundColor: BAR_COLORS.slice(0).reverse(),
+        borderRadius: 6, borderSkipped: false,
+      }]
+    },
+    options: {
+      indexAxis: 'y', responsive: true,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.raw} listeners` } } },
+      scales: {
+        x: { grid: { color: '#ffffff08' }, ticks: { color: '#7a80a0' } },
+        y: { grid: { display: false }, ticks: { color: '#e8eaf0', font: { size: 11 } } },
+      }
+    }
+  });
+
+  // Monetisation Doughnut
+  const monMap = {};
+  mon.forEach(m => monMap[m.level] = m.stream_count);
+  const monTotal = (monMap.paid || 0) + (monMap.free || 0);
+  new Chart(document.getElementById('chart-monetization'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Paid Streams', 'Free Streams'],
+      datasets: [{
+        data: [monMap.paid || 0, monMap.free || 0],
+        backgroundColor: [GREEN, PURPLE],
+        borderColor: '#111318', borderWidth: 3, hoverOffset: 8,
+      }]
+    },
+    options: {
+      cutout: '68%', responsive: true,
+      plugins: {
+        legend: { position: 'bottom' },
+        tooltip: { callbacks: {
+          label: ctx => ` ${ctx.label}: ${ctx.raw.toLocaleString()} (${(ctx.raw/monTotal*100).toFixed(1)}%)`
+        }}
+      }
+    }
+  });
+
+  // Status Doughnut
+  const statusColors = { 200: GREEN, 307: ORANGE, 404: RED };
+  const statusLabels = { 200: 'HTTP 200 OK', 307: 'HTTP 307 Redirect', 404: 'HTTP 404 Not Found' };
+  const statTotal = status.reduce((s, r) => s + r.count, 0);
+  new Chart(document.getElementById('chart-status'), {
+    type: 'doughnut',
+    data: {
+      labels: status.map(s => statusLabels[s.status] || `HTTP ${s.status}`),
+      datasets: [{
+        data: status.map(s => s.count),
+        backgroundColor: status.map(s => statusColors[s.status] || PURPLE),
+        borderColor: '#111318', borderWidth: 3, hoverOffset: 8,
+      }]
+    },
+    options: {
+      cutout: '68%', responsive: true,
+      plugins: {
+        legend: { position: 'bottom' },
+        tooltip: { callbacks: {
+          label: ctx => ` ${ctx.label}: ${ctx.raw.toLocaleString()} (${(ctx.raw/statTotal*100).toFixed(1)}%)`
+        }}
+      }
+    }
+  });
+}
+
+// ══════════════════════════════════════════════
+// TOP SONGS TABLE
+// ══════════════════════════════════════════════
+async function loadSongsTable() {
+  songsLoaded = true;
+  const songs = await fetch('/api/top_songs?limit=50').then(r => r.json());
+  maxPlays = songs[0]?.play_count || 1;
+  const tbody = document.getElementById('songs-table-body');
+  tbody.innerHTML = songs.map((s, i) => `
+    <tr>
+      <td><span class="rank-badge ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">${i+1}</span></td>
+      <td><a class="song-link" onclick="openInspector('${esc(s.name)}','${esc(s.artist)}')">${esc(s.name)}</a></td>
+      <td>${esc(s.artist || '—')}</td>
+      <td><span class="level-pill level-${s.level}">${s.level}</span></td>
+      <td><strong>${s.play_count}</strong></td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar-track"><div class="bar-fill" style="width:${(s.play_count/maxPlays*100).toFixed(1)}%;background:linear-gradient(90deg,#8b5cf6,#ec4899)"></div></div>
+          <span class="bar-label">${(s.play_count/maxPlays*100).toFixed(0)}%</span>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// ══════════════════════════════════════════════
+// ARTISTS TABLE
+// ══════════════════════════════════════════════
+async function loadArtistsTable() {
+  artistsLoaded = true;
+  const artists = await fetch('/api/top_artists?limit=50').then(r => r.json());
+  const maxListeners = artists[0]?.listener_count || 1;
+  const tbody = document.getElementById('artists-table-body');
+  tbody.innerHTML = artists.map((a, i) => `
+    <tr>
+      <td><span class="rank-badge ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">${i+1}</span></td>
+      <td><strong>${esc(a.name)}</strong></td>
+      <td><strong>${a.listener_count}</strong></td>
+      <td>${a.unique_songs}</td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar-track"><div class="bar-fill" style="width:${(a.listener_count/maxListeners*100).toFixed(1)}%;background:linear-gradient(90deg,#22d3ee,#10b981)"></div></div>
+          <span class="bar-label">${a.listener_count}</span>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// ══════════════════════════════════════════════
+// POWER USERS TABLE
+// ══════════════════════════════════════════════
+async function loadUsersTable() {
+  usersLoaded = true;
+  const users = await fetch('/api/power_users?limit=30').then(r => r.json());
+  const maxSongs = users[0]?.songs_played || 1;
+  const tbody = document.getElementById('users-table-body');
+  const avatarColors = ['var(--purple)','var(--pink)','var(--cyan)','var(--orange)','var(--green)'];
+  tbody.innerHTML = users.map((u, i) => {
+    const initials = ((u.firstName||'?')[0] + (u.lastName||'?')[0]).toUpperCase();
+    const color = avatarColors[i % avatarColors.length];
+    return `<tr>
+      <td><span class="rank-badge ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">${u.rank}</span></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:.75rem">
+          <div style="width:36px;height:36px;border-radius:8px;background:${color}25;border:1px solid ${color}40;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.78rem;color:${color};flex-shrink:0">${initials}</div>
+          <div>
+            <div style="font-weight:600">${esc(u.firstName)} ${esc(u.lastName)}</div>
+            <div style="font-size:.75rem;color:var(--text-muted)">ID: ${u.userId}</div>
+          </div>
+        </div>
+      </td>
+      <td>${u.gender || '—'}</td>
+      <td style="font-size:.8rem;color:var(--text-muted);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(u.location)}">${esc(u.location||'—')}</td>
+      <td><span class="level-pill level-${u.level}">${u.level}</span></td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar-track"><div class="bar-fill" style="width:${(u.songs_played/maxSongs*100).toFixed(1)}%;background:linear-gradient(90deg,#8b5cf6,#ec4899)"></div></div>
+          <strong>${u.songs_played}</strong>
+        </div>
+      </td>
+      <td>${u.hours_listened}h</td>
+    </tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+// RELIABILITY TABLE
+// ══════════════════════════════════════════════
+async function loadReliabilityTable() {
+  reliabilityLoaded = true;
+  const res = await fetch('/api/run_query/8').then(r => r.json());
+  const tbody = document.getElementById('reliability-table-body');
+  if (!res.rows || !res.rows.length) {
+    tbody.innerHTML = '<tr><td colspan="4"><div class="no-results">No data</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = res.rows.map(r => {
+    const pct = parseFloat(r.SUCCESS_PCT || 0);
+    const color = pct >= 95 ? 'var(--green)' : pct >= 80 ? 'var(--orange)' : 'var(--red)';
+    return `<tr>
+      <td><strong>${esc(r.firstName||'?')} ${esc(r.lastName||'?')}</strong> <span class="text-muted text-sm">ID ${r.userId}</span></td>
+      <td>${r.TOTAL_REQUESTS}</td>
+      <td>${r.OK_REQUESTS}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:.75rem">
+          <div style="font-weight:700;color:${color};min-width:50px">${pct}%</div>
+          <div class="bar-track" style="flex:1">
+            <div class="bar-fill" style="width:${pct}%;background:${color}"></div>
+          </div>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+// SONG INSPECTOR DRAWER
+// ══════════════════════════════════════════════
+function openInspector(songName, artistName) {
+  currentSong = songName;
+  document.getElementById('drawer-song-name').textContent = songName;
+  document.getElementById('drawer-song-meta').textContent = artistName ? `by ${artistName}` : '';
+  document.getElementById('inspector-overlay').classList.add('visible');
+  document.getElementById('inspector-drawer').classList.add('open');
+  // reset sort
+  document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('sort-plays').classList.add('active');
+  currentSort = 'play_count';
+  loadListeners();
+}
+function closeInspector() {
+  document.getElementById('inspector-overlay').classList.remove('visible');
+  document.getElementById('inspector-drawer').classList.remove('open');
+}
+function setSort(sort) {
+  currentSort = sort;
+  document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+  const map = { play_count:'sort-plays', ts:'sort-recent', level:'sort-tier', location:'sort-location' };
+  document.getElementById(map[sort])?.classList.add('active');
+  loadListeners();
+}
+async function loadListeners() {
+  const body = document.getElementById('drawer-body');
+  body.innerHTML = '<div class="loading"><div class="spinner"></div> Loading listeners…</div>';
+  const data = await fetch(`/api/song_listeners?song=${encodeURIComponent(currentSong)}&sort=${currentSort}`).then(r => r.json());
+  if (!data.length) {
+    body.innerHTML = '<div class="empty-state"><div class="empty-icon">🎵</div><p>No listener data found.</p></div>';
+    return;
+  }
+  const avatarColors = ['#8b5cf6','#ec4899','#22d3ee','#f59e0b','#10b981','#f43f5e'];
+  body.innerHTML = data.map((l, i) => {
+    const initials = ((l.firstName||'?')[0] + (l.lastName||'?')[0]).toUpperCase();
+    const color = avatarColors[i % avatarColors.length];
+    const lastDate = l.last_listen ? new Date(l.last_listen * 1000).toLocaleDateString() : '—';
+    return `<div class="listener-row">
+      <div class="listener-avatar" style="background:${color}20;border:1px solid ${color}40;color:${color}">${initials}</div>
+      <div class="listener-info">
+        <div class="listener-name">${esc(l.firstName)} ${esc(l.lastName)}</div>
+        <div class="listener-meta">${esc(l.location||'Unknown location')} • <span class="level-pill level-${l.level}" style="padding:.1rem .4rem">${l.level}</span> • Last: ${lastDate}</div>
+      </div>
+      <div class="listener-plays">▶ ${l.play_count}×</div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+// SQL QUERY SANDBOX
+// ══════════════════════════════════════════════
+async function loadQueriesList() {
+  queriesDataLoaded = true;
+  queriesData = await fetch('/api/queries').then(r => r.json());
+  const list = document.getElementById('query-list');
+  list.innerHTML = queriesData.map(q => `
+    <div class="query-item" id="qitem-${q.id}" onclick="selectQuery(${q.id})">
+      <div class="query-num">QUERY ${q.id}</div>
+      <div class="query-name">${q.title}</div>
+      ${q.bug_fixed ? '<div class="query-bug"><span class="bug-badge">BUG FIXED</span></div>' : ''}
+    </div>
+  `).join('');
+}
+
+function selectQuery(id) {
+  const q = queriesData.find(x => x.id === id);
+  if (!q) return;
+  selectedQuery = q;
+  document.querySelectorAll('.query-item').forEach(el => el.classList.remove('active'));
+  document.getElementById('qitem-' + id)?.classList.add('active');
+
+  const detail = document.getElementById('query-detail');
+  detail.innerHTML = `
+    <div class="query-detail-header">
+      <div class="query-num" style="color:var(--purple);font-weight:700;letter-spacing:.05em;margin-bottom:.4rem">QUERY ${q.id}</div>
+      <div class="query-detail-title">${q.title}</div>
+      <div class="query-detail-desc">${q.description}</div>
+      <div class="query-biz">
+        <div class="query-biz-label">Business Question</div>
+        <div class="query-biz-text">${q.business_question}</div>
+      </div>
+      ${q.bug_fixed ? `<div class="query-fix">
+        <div class="query-fix-label">🐛 Bug Fixed</div>
+        <div class="query-fix-text">${q.bug_fixed}</div>
+      </div>` : ''}
+    </div>
+    <div class="query-sql">
+      <div class="sql-label">SQL</div>
+      <pre>${highlightSQL(q.sql)}</pre>
+    </div>
+    <div style="padding:1rem 1.5rem;border-bottom:1px solid var(--border)">
+      <button class="run-btn" id="run-btn-${q.id}" onclick="runQuery(${q.id})">▶ Run Query (top 20 rows)</button>
+    </div>
+    <div class="query-results" id="qresults-${q.id}">
+      <div class="no-results">Click "Run Query" to execute against the live dataset.</div>
+    </div>
+  `;
+}
+
+async function runQuery(id) {
+  const btn = document.getElementById(`run-btn-${id}`);
+  const results = document.getElementById(`qresults-${id}`);
+  btn.disabled = true; btn.textContent = '⏳ Running…';
+  results.innerHTML = '<div class="loading"><div class="spinner"></div> Executing query…</div>';
+  try {
+    const data = await fetch(`/api/run_query/${id}`).then(r => r.json());
+    btn.textContent = '▶ Run Query (top 20 rows)'; btn.disabled = false;
+    if (data.error) {
+      results.innerHTML = `<div class="no-results" style="color:var(--red)">Error: ${data.error}</div>`;
+      return;
+    }
+    if (!data.rows?.length) {
+      results.innerHTML = '<div class="no-results">No results returned.</div>';
+      return;
+    }
+    results.innerHTML = `
+      <div class="results-label">Results — ${data.rows.length} rows</div>
+      <div class="results-table-wrap">
+        <table class="results-table">
+          <thead><tr>${data.columns.map(c => `<th>${c}</th>`).join('')}</tr></thead>
+          <tbody>${data.rows.map(r =>
+            `<tr>${data.columns.map(c => `<td>${r[c] ?? '—'}</td>`).join('')}</tr>`
+          ).join('')}</tbody>
+        </table>
+      </div>
+    `;
+  } catch(e) {
+    btn.textContent = '▶ Run Query (top 20 rows)'; btn.disabled = false;
+    results.innerHTML = `<div class="no-results" style="color:var(--red)">Request failed: ${e.message}</div>`;
+  }
+}
+
+function highlightSQL(sql) {
+  const keywords = ['SELECT','FROM','WHERE','GROUP','BY','ORDER','HAVING','JOIN','LEFT','RIGHT','FULL','OUTER','INNER','ON','AS','DISTINCT','AND','OR','NOT','IS','NULL','CASE','WHEN','THEN','ELSE','END','WITH','OVER','PARTITION','COUNT','SUM','AVG','MAX','MIN','ROUND','CAST','FLOAT','DENSE_RANK','FIRST_VALUE','LIMIT'];
+  let s = sql.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  // strings
+  s = s.replace(/'([^']*)'/g, `<span class="str">'$1'</span>`);
+  // numbers
+  s = s.replace(/\b(\d+\.?\d*)\b/g, `<span class="num">$1</span>`);
+  // keywords
+  keywords.forEach(kw => {
+    s = s.replace(new RegExp(`\\b${kw}\\b`, 'g'), `<span class="kw">${kw}</span>`);
+  });
+  // comments
+  s = s.replace(/(--[^\n]*)/g, `<span class="cmt">$1</span>`);
+  return s;
+}
+
+// ══════════════════════════════════════════════
+// GLOBAL SEARCH
+// ══════════════════════════════════════════════
+let searchTimer;
+document.getElementById('global-search').addEventListener('input', e => {
+  clearTimeout(searchTimer);
+  const q = e.target.value.trim();
+  if (q.length < 2) { closeSearch(); return; }
+  searchTimer = setTimeout(() => doSearch(q), 300);
+});
+document.getElementById('global-search').addEventListener('blur', () => {
+  setTimeout(closeSearch, 200);
+});
+
+async function doSearch(q) {
+  const data = await fetch(`/api/search?q=${encodeURIComponent(q)}`).then(r => r.json());
+  const panel = document.getElementById('search-results');
+  let html = '';
+  if (data.songs?.length) {
+    html += `<div class="sr-section"><div class="sr-title">🎵 Songs</div>`;
+    html += data.songs.map(s => `
+      <div class="sr-item" onclick="openInspector('${esc(s.name)}','${esc(s.artist)}');closeSearch()">
+        <div class="sr-icon" style="background:#8b5cf620">🎵</div>
+        <div><div class="sr-name">${esc(s.name)}</div><div class="sr-meta">${esc(s.artist||'Unknown')} • ${s.plays} plays</div></div>
+      </div>
+    `).join('');
+    html += '</div>';
+  }
+  if (data.artists?.length) {
+    if (html) html += '<hr class="sr-divider">';
+    html += `<div class="sr-section"><div class="sr-title">🎤 Artists</div>`;
+    html += data.artists.map(a => `
+      <div class="sr-item" onclick="showTab('artists');closeSearch()">
+        <div class="sr-icon" style="background:#22d3ee20">🎤</div>
+        <div><div class="sr-name">${esc(a.name)}</div><div class="sr-meta">${a.listeners} unique listeners</div></div>
+      </div>
+    `).join('');
+    html += '</div>';
+  }
+  if (data.users?.length) {
+    if (html) html += '<hr class="sr-divider">';
+    html += `<div class="sr-section"><div class="sr-title">👥 Users</div>`;
+    html += data.users.map(u => `
+      <div class="sr-item" onclick="showTab('users');closeSearch()">
+        <div class="sr-icon" style="background:#10b98120">👤</div>
+        <div><div class="sr-name">${esc(u.firstName)} ${esc(u.lastName)}</div><div class="sr-meta">${u.songs_played} songs played</div></div>
+      </div>
+    `).join('');
+    html += '</div>';
+  }
+  if (!html) html = '<div class="sr-section"><div class="no-results">No results found.</div></div>';
+  panel.innerHTML = html;
+  panel.classList.add('visible');
+}
+function closeSearch() {
+  document.getElementById('search-results').classList.remove('visible');
+}
+
+// ══════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════
+function setText(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val ?? '—';
+}
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function truncate(s, n) {
+  return s && s.length > n ? s.slice(0, n) + '…' : s;
+}
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+(async () => {
+  await loadKPIs();
+  await loadOverviewCharts();
+})();
+</script>
+</body>
+</html>

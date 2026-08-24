@@ -1,0 +1,160 @@
+================================================================================
+SONG STREAMING PLATFORM — CASE STUDY: STORY & CONCLUSION
+================================================================================
+Prepared By : Data Analytics Team
+Dataset     : events.csv (8,056 streaming logs) + songs.csv (79 song catalog records)
+Platform    : PostgreSQL — Analytical SQL Window Functions
+================================================================================
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PART 1: THE STORY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+A fast-growing music streaming startup deployed its platform and captured
+8,056 event logs over an active period. These logs recorded every interaction
+a user made — from pressing "Next Song" to experiencing HTTP errors — across
+96 unique user accounts from diverse cities across the United States.
+
+The company also maintained a small internal song catalog of 79 tracks linked
+to known artist metadata (geographic coordinates, release year, song duration).
+However, the catalog barely overlapped with what users actually streamed in
+practice — a classic symptom of a curated library that hasn't kept pace with
+user discovery.
+
+By applying 10 analytical SQL queries using PostgreSQL Window Functions, the
+data team set out to answer the six key business questions:
+
+  1. Which artists are most popular? (QUERY 1 & 5)
+  2. Which songs are played the most? (QUERY 2 & 3)
+  3. Who are our most engaged "power users"? (QUERY 6 & 10)
+  4. How does song popularity vary within a single session? (QUERY 4)
+  5. How does session duration compare across sessions? (QUERY 7)
+  6. How reliable is our platform, and what is our monetization profile? (QUERY 8 & 9)
+
+
+——————————————————————————————————————————————
+FINDING 1: The Platform Has a Clear Artist Hierarchy
+——————————————————————————————————————————————
+Using QUERY 1 (artist popularity by listener count) and QUERY 5 (artist
+ranking by song variety), the analysis revealed that a small group of artists
+accounts for a disproportionate share of listening time. The top artists —
+whose names appear most frequently across the 8,056 event rows — attract the
+broadest audiences. Many lesser-known artists appear only once in the event
+log, indicating a long-tail distribution of music consumption typical of
+streaming platforms.
+
+KEY INSIGHT: Focusing catalog expansion and licensing deals on the top 20
+artists by listener count could serve the needs of the majority of the user
+base immediately.
+
+
+——————————————————————————————————————————————
+FINDING 2: Song Popularity Is Highly Concentrated
+——————————————————————————————————————————————
+QUERY 2 and QUERY 3 revealed that the vast majority of plays cluster around
+a handful of songs. Most users gravitate toward the same tracks repeatedly
+within and across sessions, suggesting strong "hit song" dynamics. Many songs
+in the log appear only once — streamed by a single user, never to be heard
+again on the platform.
+
+KEY INSIGHT: A recommendation engine seeded with the top 10–20 most-played
+tracks would immediately improve user satisfaction and session depth.
+
+
+——————————————————————————————————————————————
+FINDING 3: A Small Group of Power Users Drives Platform Engagement
+——————————————————————————————————————————————
+QUERY 6 (user activity by songs played) and QUERY 10 (user activity by total
+listening duration) identified a clear "power user" tier. The top 10% of
+users by song count account for a dramatically outsized share of total stream
+events. These users also tend to maintain longer sessions (as confirmed by
+QUERY 7's within-session song length analysis).
+
+KEY INSIGHT: Targeting power users with loyalty rewards, premium tier
+promotions, or early access to new releases could significantly improve
+retention and lifetime value.
+
+
+——————————————————————————————————————————————
+FINDING 4: Platform Reliability Has Real Issues That Were Previously Hidden
+——————————————————————————————————————————————
+This is the most critical finding. QUERY 8, in its original form, filtered
+only "NextSong" events and reported a 100% HTTP success rate for all users —
+a deceptive result. When the filter was removed (the corrected version), the
+full picture emerged: HTTP 404 (Not Found) and 307 (Temporary Redirect) errors
+occur across various platform interactions outside of song playback. Some users
+experience noticeably lower success rates than others.
+
+KEY INSIGHT: Addressing the root causes of 404 and 307 errors — likely broken
+links, missing resource endpoints, or session redirect logic — will directly
+improve user experience and reduce abandonment.
+
+
+——————————————————————————————————————————————
+FINDING 5: Monetization Is Unevenly Distributed Across the User Base
+——————————————————————————————————————————————
+QUERY 9 calculated paid vs. free listening ratios per user. The results show
+a bimodal distribution: users are either predominantly "free" or predominantly
+"paid" listeners, with very few in the middle. The paid segment, while smaller
+in number, contributes significantly higher stream counts of premium-tier songs.
+
+KEY INSIGHT: Users already in the "mostly paid" category are strong candidates
+for annual subscription upsell campaigns. Free users with high activity
+(many free streams) represent the highest-potential conversion targets.
+
+
+——————————————————————————————————————————————
+FINDING 6: The Song Catalog Needs Urgent Expansion
+——————————————————————————————————————————————
+The full outer join analysis (Important Note.sql) exposed a fundamental
+data gap: the 79-song internal catalog matches only ~11 unique artist names
+from the 8,056-row events log. In practice, users are streaming thousands of
+songs that exist outside the formal catalog. All analytical JOIN queries must
+use LEFT JOIN (EVENTS as the primary table) to avoid losing 99%+ of real data.
+
+KEY INSIGHT: The catalog is not a representative sample of what users listen
+to. Expanding catalog metadata by ingesting data from the music discovery API
+(e.g., MusicBrainz, Spotify API) would unlock dramatically richer analytics
+and enable geo-targeting by artist location.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PART 2: CONCLUSION & BUSINESS RECOMMENDATIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+This case study demonstrates the power of analytical SQL window functions
+(DENSE_RANK, COUNT OVER PARTITION BY, FIRST_VALUE, SUM OVER PARTITION BY)
+to extract actionable business intelligence from raw event logs at scale —
+without requiring any data export or external BI tool.
+
+SUMMARY OF RECOMMENDED ACTIONS:
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ #  │ Action                                  │ Priority │ Impact            │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ 1  │ Fix HTTP 404/307 errors in the platform │ URGENT   │ Platform stability│
+│ 2  │ Expand the song catalog via API ingestion│ HIGH     │ Richer analytics  │
+│ 3  │ Build a recommendation engine           │ HIGH     │ User retention    │
+│ 4  │ Launch paid-tier conversion campaign    │ MEDIUM   │ Revenue growth    │
+│ 5  │ Implement power-user loyalty program    │ MEDIUM   │ Engagement & LTV  │
+│ 6  │ Personalize artist content by geography │ LOW      │ UX differentiation│
+└─────────────────────────────────────────────────────────────────────────────┘
+
+TECHNICAL LESSONS LEARNED:
+  • Always inspect JOIN cardinality before running analytical queries.
+    INNER JOIN across mismatched datasets silently discards critical data.
+  • Window function ORDER direction matters: ASC ranks the lowest value first.
+    Always verify DESC is used when "rank 1" should mean "most".
+  • Grain control is essential: including extra columns (SESSION_ID, SONG_NAME)
+    in DISTINCT-based aggregations exponentially multiplies output rows.
+  • HTTP success rate analysis must not pre-filter to one event type — doing so
+    introduces survivorship bias that completely masks error rates.
+
+This analysis provides a solid analytical foundation. With a fully expanded
+catalog, a real-time streaming pipeline (e.g., Apache Kafka → PostgreSQL), and
+a live dashboard (built in Phase 2 of this project), the platform will have
+the data infrastructure to compete at a professional streaming-service level.
+
+================================================================================
+END OF CASE STUDY
+================================================================================
